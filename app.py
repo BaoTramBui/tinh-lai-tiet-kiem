@@ -1,46 +1,79 @@
 import streamlit as st
 
-st.set_page_config(
-    page_title="Tính lãi tiết kiệm",
-    page_icon="💰"
-)
+st.set_page_config(page_title="Tính lãi gửi tiết kiệm", page_icon="📋")
 
-st.title("💰 Tính lãi gửi tiết kiệm")
-st.write("Nhập thông tin để tính tiền lãi dự kiến.")
+st.title("📋 Thông tin khoản tiền gửi")
 
+# 1. Nhập liệu từ người dùng
 so_tien_gui = st.number_input(
     "Số tiền gửi (VNĐ)",
-    min_value=0.0,
-    value=10000000.0,
-    step=500000.0,
-    format="%.0f"
-)
-
-lai_suat = st.number_input(
-    "Lãi suất (%/năm)",
-    min_value=0.0,
-    value=5.0,
-    step=0.1
+    min_value=0,
+    value=10000000,
+    step=1000000,
+    format="%d"
 )
 
 ky_han = st.number_input(
-    "Kỳ hạn (tháng)",
+    "Kỳ hạn gửi (tháng)",
     min_value=1,
     value=12,
     step=1
 )
 
-tien_lai = so_tien_gui * lai_suat / 100 * ky_han / 12
-tong_nhan = so_tien_gui + tien_lai
+lai_suat = st.number_input(
+    "Lãi suất (%/năm)",
+    min_value=0.0,
+    value=5.00,
+    step=0.1,
+    format="%.2f"
+)
 
-col1, col2 = st.columns(2)
+hinh_thuc = st.selectbox(
+    "Hình thức nhận lãi",
+    ["Cuối kỳ", "Hàng tháng", "Hàng quý"]
+)
 
-with col1:
-    st.metric("Tiền lãi", f"{tien_lai:,.0f} VNĐ")
-
-with col2:
-    st.metric("Tổng nhận", f"{tong_nhan:,.0f} VNĐ")
+phuong_phap = st.radio(
+    "Phương pháp tính lãi",
+    ["Lãi đơn", "Lãi kép"],
+    horizontal=True
+)
 
 st.caption(
-    "Công thức: Tiền lãi = Tiền gửi × Lãi suất năm × Số tháng / 12"
+    "Lãi suất được tính theo năm. Với lãi kép, tiền lãi được nhập vào gốc "
+    "theo chu kỳ đã chọn. Vì vậy, hàng tháng và hàng quý là chu kỳ tính "
+    "lãi/tái đầu tư trong mô hình này."
 )
+
+# 2. Xử lý tính toán khi nhấn nút
+if st.button("🧧 TÍNH TIỀN LÃI", use_container_width=True):
+    r = lai_suat / 100  # Chuyển % sang số thập phân
+    
+    if phuong_phap == "Lãi đơn":
+        # Công thức lãi đơn
+        tien_lai = so_tien_gui * r * (ky_han / 12)
+        tong_nhan = so_tien_gui + tien_lai
+    else:
+        # Công thức lãi kép
+        # Tùy thuộc vào hình thức nhận lãi/ghép gốc
+        if hinh_thuc == "Hàng tháng":
+            m = 12  # 12 lần/năm
+        elif hinh_thuc == "Hàng quý":
+            m = 4   # 4 lần/năm
+        else:
+            # Nếu chọn Cuối kỳ với Lãi kép, mặc định ghép lãi theo tháng
+            m = 12  
+        
+        # Số thời gian tính theo năm
+        t = ky_han / 12
+        tong_nhan = so_tien_gui * ((1 + r / m) ** (m * t))
+        tien_lai = tong_nhan - so_tien_gui
+
+    st.divider()
+    
+    # 3. Hiển thị kết quả
+    st.subheader("Tiền lãi")
+    st.markdown(f"### **{tien_lai:,.0f} VNĐ**".replace(",", "."))
+    
+    st.subheader("Tổng nhận")
+    st.markdown(f"### **{tong_nhan:,.0f} VNĐ**".replace(",", "."))
