@@ -1,5 +1,5 @@
 import streamlit as st
-
+st.image("logo.jgp")
 st.set_page_config(page_title="Tính lãi gửi tiết kiệm", page_icon="📋")
 
 st.title("📋 Thông tin khoản tiền gửi")
